@@ -47,6 +47,8 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
+import json
+
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.46.0.dev0")
@@ -394,7 +396,7 @@ def main():
         revision=model_args.model_revision,
         token=model_args.token,
         trust_remote_code=model_args.trust_remote_code,
-        ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        ignore_mismatched_sizes=model_args.ignore_mismatched_sizes
     )
 
     # Tokenizer check: this script requires a fast tokenizer.
@@ -621,11 +623,12 @@ def main():
         trainer.save_metrics("predict", metrics)
 
         # Save predictions
-        output_predictions_file = os.path.join(training_args.output_dir, "predictions.txt")
+        output_predictions_file = os.path.join(training_args.output_dir, "predictions.json")
         if trainer.is_world_process_zero():
             with open(output_predictions_file, "w") as writer:
-                for prediction in true_predictions:
-                    writer.write(" ".join(prediction) + "\n")
+                json.dump(true_predictions, writer, indent=4)
+                # for prediction in true_predictions:
+                #     writer.write(" ".join(prediction) + "\n")
 
     kwargs = {"finetuned_from": model_args.model_name_or_path, "tasks": "token-classification"}
     if data_args.dataset_name is not None:
